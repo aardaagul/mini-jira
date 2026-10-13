@@ -10,12 +10,12 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-# Güncelleme için esnek şema (sadece gönderilen alanlar güncellenir)
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
-    priority: Optional[str] = None # Eklendi
+    priority: Optional[str] = None
+    due_date: Optional[str] = None
 
 @router.post("/", response_model=TaskResponse, status_code=201)
 def create_task(
@@ -34,10 +34,10 @@ def create_task(
         description=task.description,
         status=task.status,
         priority=task.priority or "Medium",
+        due_date=task.due_date,
         project_id=task.project_id,
         assignee_id=current_user.id
     )
-    
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
@@ -56,7 +56,6 @@ def get_tasks_by_project(
     tasks = db.query(Task).filter(Task.project_id == project_id).all()
     return tasks
 
-# Görevi Güncelleme (Sürükle-bırak veya Modal üzerinden düzenleme)
 @router.put("/{task_id}", response_model=TaskResponse)
 def update_task(
     task_id: int,
@@ -79,13 +78,14 @@ def update_task(
     if task_data.status is not None:
         task.status = task_data.status
     if task_data.priority is not None:
-        task.priority = task_data.priority    
+        task.priority = task_data.priority
+    if task_data.due_date is not None:
+        task.due_date = task_data.due_date
 
     db.commit()
     db.refresh(task)
     return task
 
-# Görevi Silme (DELETE)
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_task(
     task_id: int,

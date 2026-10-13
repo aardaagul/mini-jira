@@ -1,4 +1,3 @@
-# TaskBase veya TaskCreate / TaskResponse sınıflarına:
 from typing import Optional
 from pydantic import BaseModel
 
@@ -6,7 +5,8 @@ class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     status: Optional[str] = "To Do"
-    priority: Optional[str] = "Medium" # Eklendi
+    priority: Optional[str] = "Medium"
+    due_date: Optional[str] = None
 
 class TaskCreate(TaskBase):
     project_id: int
