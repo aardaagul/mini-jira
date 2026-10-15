@@ -1,0 +1,18 @@
+# Python & FastAPI Sanal Ortamları
+.venv/
+.venv-1/
+venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+
+# Flutter & Dart Derleme Dosyaları
+mini_jira_app/build/
+mini_jira_app/.dart_tool/
+mini_jira_app/.flutter-plugins
+mini_jira_app/.flutter-plugins-dependencies
+
+# Editör Dosyaları
+.vscode/
+.idea/

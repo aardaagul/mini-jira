@@ -12,11 +12,10 @@ class UserResponse(BaseModel):
     name: str
     email: EmailStr
     avatar: Optional[str] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
-
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -25,5 +24,3 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
-
-    

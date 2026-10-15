@@ -43,12 +43,12 @@ class ProjectService {
     return [];
   }
 
-  // Yeni görev oluşturma (priority eklendi)
   Future<bool> createTask({
     required String title,
     required String description,
     required String status,
     required String priority,
+    String? dueDate,
     required int projectId,
   }) async {
     final token = await _getToken();
@@ -65,6 +65,7 @@ class ProjectService {
         'description': description,
         'status': status,
         'priority': priority,
+        'due_date': dueDate,
         'project_id': projectId,
       }),
     );
@@ -72,7 +73,6 @@ class ProjectService {
     return response.statusCode == 201 || response.statusCode == 200;
   }
 
-  // Sürükle-bırak için durum güncelleme
   Future<bool> updateTaskStatus(int taskId, String newStatus) async {
     final token = await _getToken();
     final url = Uri.parse('${ApiConstants.baseUrl}/tasks/$taskId');
@@ -89,13 +89,13 @@ class ProjectService {
     return response.statusCode == 200;
   }
 
-  // Görevi düzenleme (priority eklendi)
   Future<bool> updateTask({
     required int taskId,
     required String title,
     required String description,
     required String status,
     required String priority,
+    String? dueDate,
   }) async {
     final token = await _getToken();
     final url = Uri.parse('${ApiConstants.baseUrl}/tasks/$taskId');
@@ -111,6 +111,7 @@ class ProjectService {
         'description': description,
         'status': status,
         'priority': priority,
+        'due_date': dueDate ?? '',
       }),
     );
 
@@ -150,7 +151,7 @@ class ProjectService {
 
     return response.statusCode == 201 || response.statusCode == 200;
   }
-  // Projeyi güncelleme metodu
+
   Future<bool> updateProject(int projectId, String name, String description) async {
     final token = await _getToken();
     final url = Uri.parse('${ApiConstants.baseUrl}/projects/$projectId');
@@ -170,7 +171,6 @@ class ProjectService {
     return response.statusCode == 200;
   }
 
-  // Projeyi silme metodu
   Future<bool> deleteProject(int projectId) async {
     final token = await _getToken();
     final url = Uri.parse('${ApiConstants.baseUrl}/projects/$projectId');
