@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart'; // debugPrint için eklendi
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
@@ -28,7 +29,8 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print("Giriş servisi hatası: $e");
+      // avoid_print çözümü: print yerine debugPrint kullanıldı
+      debugPrint("Giriş servisi hatası: $e");
       return false;
     }
   }
@@ -52,7 +54,15 @@ class AuthService {
       } else {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         if (data['detail'] is List) {
-          return "Lütfen geçerli bir e-posta adresi girin (Örn: ad@mail.com).";
+          final details = data['detail'] as List;
+          if (details.isNotEmpty &&
+              details.first is Map &&
+              details.first['msg'] != null) {
+            return details.first['msg']
+                .toString()
+                .replaceFirst('Value error, ', '');
+          }
+          return "Girdiğiniz bilgileri kontrol edin.";
         }
         return data['detail']?.toString() ?? 'Kayıt başarısız oldu.';
       }

@@ -1,18 +1,39 @@
-# Python & FastAPI Sanal Ortamları
+# ---- Python / FastAPI ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Sanal ortamlar
 .venv/
 .venv-1/
 venv/
-__pycache__/
-*.py[cod]
-*.sqlite3
-*.db
+env/
 
-# Flutter & Dart Derleme Dosyaları
+# Veritabanı dosyaları
+*.db
+*.sqlite3
+
+# Ortam değişkenleri (gizli bilgiler)
+.env
+
+# Loglar
+*.log
+build_log.txt
+
+# ---- Flutter / Dart ----
 mini_jira_app/build/
 mini_jira_app/.dart_tool/
 mini_jira_app/.flutter-plugins
 mini_jira_app/.flutter-plugins-dependencies
+**/generated_plugin_registrant.dart
 
-# Editör Dosyaları
+# ---- Editör / IDE ----
 .vscode/
 .idea/
+*.iml
+
+# ---- İşletim Sistemi ----
+.DS_Store
+Thumbs.db

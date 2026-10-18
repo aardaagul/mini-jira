@@ -3,8 +3,7 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    container_name: minijira_db
-    restart: always
+    container_name: minijira_postgres
     environment:
       POSTGRES_USER: jira_user
       POSTGRES_PASSWORD: jira_password
@@ -13,6 +12,31 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: minijira_backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql+psycopg://jira_user:jira_password@db:5432/minijira
+      - SECRET_KEY=mini_jira_super_secret_jwt_key_2026_secure_token
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./mini_jira_app
+      dockerfile: Dockerfile
+    container_name: minijira_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

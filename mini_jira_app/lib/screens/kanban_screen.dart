@@ -7,10 +7,10 @@ import '../services/project_service.dart';
 class KanbanScreen extends StatefulWidget {
   final Project project;
 
-  const KanbanScreen({Key? key, required this.project}) : super(key: key);
+  const KanbanScreen({super.key, required this.project});
 
   @override
-  _KanbanScreenState createState() => _KanbanScreenState();
+  State<KanbanScreen> createState() => _KanbanScreenState();
 }
 
 class _KanbanScreenState extends State<KanbanScreen> {
@@ -34,14 +34,16 @@ class _KanbanScreenState extends State<KanbanScreen> {
   }
 
   Color _getPriorityColor(String priority) {
-    switch (priority) {
-      case 'High':
-        return const Color(0xFFEF4444);
-      case 'Low':
-        return const Color(0xFF10B981);
-      case 'Medium':
+    switch (priority.toLowerCase()) {
+      case 'critical':
+        return const Color(0xFF7C3AED); // Mor / Kritik
+      case 'high':
+        return const Color(0xFFEF4444); // Kırmızı
+      case 'low':
+        return const Color(0xFF10B981); // Yeşil
+      case 'medium':
       default:
-        return const Color(0xFFF59E0B);
+        return const Color(0xFFF59E0B); // Sarı / Turuncu
     }
   }
 
@@ -68,6 +70,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
     if (task.status == newStatus) return;
 
     bool success = await _projectService.updateTaskStatus(task.id, newStatus);
+    if (!mounted) return;
     if (success) {
       _loadTasks();
     } else {
@@ -78,11 +81,14 @@ class _KanbanScreenState extends State<KanbanScreen> {
   }
 
   void _showAddTaskDialog({String initialStatus = 'To Do'}) {
-    final _titleController = TextEditingController();
-    final _descController = TextEditingController();
-    String _selectedStatus = initialStatus;
-    String _selectedPriority = 'Medium';
-    String? _selectedDueDate;
+    final titleController = TextEditingController();
+    final descController = TextEditingController();
+    String selectedStatus = initialStatus;
+    String selectedPriority = 'Medium';
+    String? selectedDueDate;
+
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
 
     showDialog(
       context: context,
@@ -101,7 +107,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextField(
-                        controller: _titleController,
+                        controller: titleController,
                         decoration: const InputDecoration(
                           labelText: 'Görev Başlığı',
                           hintText: 'Örn: ALU Modülünü Yaz',
@@ -109,7 +115,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                       ),
                       const SizedBox(height: 14),
                       TextField(
-                        controller: _descController,
+                        controller: descController,
                         decoration: const InputDecoration(
                           labelText: 'Açıklama',
                           hintText: 'Görev detaylarını buraya yazın...',
@@ -121,14 +127,14 @@ class _KanbanScreenState extends State<KanbanScreen> {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: _selectedPriority,
+                              initialValue: selectedPriority,
                               decoration: const InputDecoration(labelText: 'Öncelik'),
-                              items: ['Low', 'Medium', 'High']
+                              items: ['Low', 'Medium', 'High', 'Critical']
                                   .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                                   .toList(),
                               onChanged: (val) {
                                 if (val != null) {
-                                  setDialogState(() => _selectedPriority = val);
+                                  setDialogState(() => selectedPriority = val);
                                 }
                               },
                             ),
@@ -136,15 +142,15 @@ class _KanbanScreenState extends State<KanbanScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: _selectedStatus,
+                              initialValue: selectedStatus,
                               decoration: const InputDecoration(labelText: 'Durum'),
-                              items: ['To Do', 'In Progress', 'Done']
+                              items: ['Backlog', 'To Do', 'In Progress', 'Review', 'Done']
                                   .map((status) => DropdownMenuItem(
                                       value: status, child: Text(status)))
                                   .toList(),
                               onChanged: (val) {
                                 if (val != null) {
-                                  setDialogState(() => _selectedStatus = val);
+                                  setDialogState(() => selectedStatus = val);
                                 }
                               },
                             ),
@@ -163,7 +169,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                           );
                           if (picked != null) {
                             setDialogState(() {
-                              _selectedDueDate = _formatDate(picked);
+                              selectedDueDate = _formatDate(picked);
                             });
                           }
                         },
@@ -171,7 +177,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 14),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.withOpacity(0.5)),
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.5)),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
@@ -186,16 +192,16 @@ class _KanbanScreenState extends State<KanbanScreen> {
                                   ),
                                   const SizedBox(width: 10),
                                   Text(
-                                    _selectedDueDate ??
+                                    selectedDueDate ??
                                         'Son Teslim Tarihi Seç (Opsiyonel)',
                                     style: const TextStyle(fontSize: 13.5),
                                   ),
                                 ],
                               ),
-                              if (_selectedDueDate != null)
+                              if (selectedDueDate != null)
                                 GestureDetector(
                                   onTap: () =>
-                                      setDialogState(() => _selectedDueDate = null),
+                                      setDialogState(() => selectedDueDate = null),
                                   child: const Icon(Icons.clear,
                                       size: 18, color: Colors.grey),
                                 ),
@@ -214,19 +220,20 @@ class _KanbanScreenState extends State<KanbanScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    if (_titleController.text.trim().isNotEmpty) {
+                    if (titleController.text.trim().isNotEmpty) {
                       bool success = await _projectService.createTask(
-                        title: _titleController.text.trim(),
-                        description: _descController.text.trim(),
-                        status: _selectedStatus,
-                        priority: _selectedPriority,
-                        dueDate: _selectedDueDate,
+                        title: titleController.text.trim(),
+                        description: descController.text.trim(),
+                        status: selectedStatus,
+                        priority: selectedPriority,
+                        dueDate: selectedDueDate,
                         projectId: widget.project.id,
                       );
-                      Navigator.pop(context);
+                      if (!mounted) return;
+                      navigator.pop();
                       if (success) {
                         _loadTasks();
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           const SnackBar(
                             content: Text("Görev panoya eklendi!"),
                             behavior: SnackBarBehavior.floating,
@@ -246,12 +253,15 @@ class _KanbanScreenState extends State<KanbanScreen> {
   }
 
   void _showEditTaskDialog(Task task) {
-    final _titleController = TextEditingController(text: task.title);
-    final _descController = TextEditingController(text: task.description);
-    String _selectedStatus = task.status;
-    String _selectedPriority = task.priority;
-    String? _selectedDueDate =
+    final titleController = TextEditingController(text: task.title);
+    final descController = TextEditingController(text: task.description);
+    String selectedStatus = task.status;
+    String selectedPriority = task.priority;
+    String? selectedDueDate =
         (task.dueDate != null && task.dueDate!.isNotEmpty) ? task.dueDate : null;
+
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
 
     showDialog(
       context: context,
@@ -268,7 +278,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4F46E5).withOpacity(0.1),
+                          color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -317,10 +327,11 @@ class _KanbanScreenState extends State<KanbanScreen> {
 
                       if (confirm) {
                         bool deleted = await _projectService.deleteTask(task.id);
-                        Navigator.pop(context);
+                        if (!mounted) return;
+                        navigator.pop();
                         if (deleted) {
                           _loadTasks();
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             const SnackBar(
                               content: Text("Görev silindi."),
                               behavior: SnackBarBehavior.floating,
@@ -339,13 +350,13 @@ class _KanbanScreenState extends State<KanbanScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextField(
-                        controller: _titleController,
+                        controller: titleController,
                         decoration:
                             const InputDecoration(labelText: 'Görev Başlığı'),
                       ),
                       const SizedBox(height: 14),
                       TextField(
-                        controller: _descController,
+                        controller: descController,
                         decoration:
                             const InputDecoration(labelText: 'Açıklama'),
                         maxLines: 3,
@@ -355,16 +366,16 @@ class _KanbanScreenState extends State<KanbanScreen> {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: _selectedPriority,
+                              initialValue: selectedPriority,
                               decoration:
                                   const InputDecoration(labelText: 'Öncelik'),
-                              items: ['Low', 'Medium', 'High']
+                              items: ['Low', 'Medium', 'High', 'Critical']
                                   .map((p) =>
                                       DropdownMenuItem(value: p, child: Text(p)))
                                   .toList(),
                               onChanged: (val) {
                                 if (val != null) {
-                                  setDialogState(() => _selectedPriority = val);
+                                  setDialogState(() => selectedPriority = val);
                                 }
                               },
                             ),
@@ -372,16 +383,16 @@ class _KanbanScreenState extends State<KanbanScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: _selectedStatus,
+                              initialValue: selectedStatus,
                               decoration:
                                   const InputDecoration(labelText: 'Durum'),
-                              items: ['To Do', 'In Progress', 'Done']
+                              items: ['Backlog', 'To Do', 'In Progress', 'Review', 'Done']
                                   .map((status) => DropdownMenuItem(
                                       value: status, child: Text(status)))
                                   .toList(),
                               onChanged: (val) {
                                 if (val != null) {
-                                  setDialogState(() => _selectedStatus = val);
+                                  setDialogState(() => selectedStatus = val);
                                 }
                               },
                             ),
@@ -400,7 +411,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                           );
                           if (picked != null) {
                             setDialogState(() {
-                              _selectedDueDate = _formatDate(picked);
+                              selectedDueDate = _formatDate(picked);
                             });
                           }
                         },
@@ -408,7 +419,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 14),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.withOpacity(0.5)),
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.5)),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
@@ -423,15 +434,15 @@ class _KanbanScreenState extends State<KanbanScreen> {
                                   ),
                                   const SizedBox(width: 10),
                                   Text(
-                                    _selectedDueDate ?? 'Son Teslim Tarihi Seç',
+                                    selectedDueDate ?? 'Son Teslim Tarihi Seç',
                                     style: const TextStyle(fontSize: 13.5),
                                   ),
                                 ],
                               ),
-                              if (_selectedDueDate != null)
+                              if (selectedDueDate != null)
                                 GestureDetector(
                                   onTap: () =>
-                                      setDialogState(() => _selectedDueDate = null),
+                                      setDialogState(() => selectedDueDate = null),
                                   child: const Icon(Icons.clear,
                                       size: 18, color: Colors.grey),
                                 ),
@@ -450,19 +461,20 @@ class _KanbanScreenState extends State<KanbanScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    if (_titleController.text.trim().isNotEmpty) {
+                    if (titleController.text.trim().isNotEmpty) {
                       bool success = await _projectService.updateTask(
                         taskId: task.id,
-                        title: _titleController.text.trim(),
-                        description: _descController.text.trim(),
-                        status: _selectedStatus,
-                        priority: _selectedPriority,
-                        dueDate: _selectedDueDate,
+                        title: titleController.text.trim(),
+                        description: descController.text.trim(),
+                        status: selectedStatus,
+                        priority: selectedPriority,
+                        dueDate: selectedDueDate,
                       );
-                      Navigator.pop(context);
+                      if (!mounted) return;
+                      navigator.pop();
                       if (success) {
                         _loadTasks();
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           const SnackBar(
                             content: Text("Görev güncellendi!"),
                             behavior: SnackBarBehavior.floating,
@@ -527,7 +539,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4F46E5).withOpacity(0.12),
+                    color: const Color(0xFF4F46E5).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -596,23 +608,27 @@ class _KanbanScreenState extends State<KanbanScreen> {
           final progressPercent =
               totalCount > 0 ? (doneCount / totalCount) : 0.0;
 
+          // Gelişmiş Arama Filtresi (TSK-ID veya Başlık/Açıklama eşleşmesi)
           final filteredTasks = allTasks.where((t) {
-            final matchesQuery = _searchQuery.isEmpty ||
-                t.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                t.description
-                    .toLowerCase()
-                    .contains(_searchQuery.toLowerCase());
+            final query = _searchQuery.toLowerCase().trim();
+            final taskKey = 'tsk-${t.id}';
+            
+            final matchesQuery = query.isEmpty ||
+                taskKey.contains(query) ||
+                t.id.toString() == query ||
+                t.title.toLowerCase().contains(query) ||
+                t.description.toLowerCase().contains(query);
+
             final matchesPriority =
-                _filterPriority == 'All' || t.priority == _filterPriority;
+                _filterPriority == 'All' || t.priority.toLowerCase() == _filterPriority.toLowerCase();
             return matchesQuery && matchesPriority;
           }).toList();
 
-          final todoTasks =
-              filteredTasks.where((t) => t.status == 'To Do').toList();
-          final inProgressTasks =
-              filteredTasks.where((t) => t.status == 'In Progress').toList();
-          final doneTasks =
-              filteredTasks.where((t) => t.status == 'Done').toList();
+          final backlogTasks = filteredTasks.where((t) => t.status == 'Backlog').toList();
+          final todoTasks = filteredTasks.where((t) => t.status == 'To Do').toList();
+          final inProgressTasks = filteredTasks.where((t) => t.status == 'In Progress').toList();
+          final reviewTasks = filteredTasks.where((t) => t.status == 'Review').toList();
+          final doneTasks = filteredTasks.where((t) => t.status == 'Done').toList();
 
           return Column(
             children: [
@@ -621,7 +637,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF1E293B).withOpacity(0.6)
+                      ? const Color(0xFF1E293B).withValues(alpha: 0.6)
                       : Colors.white,
                   border: Border(
                     bottom: BorderSide(
@@ -640,7 +656,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
-                            hintText: 'Görev başlığı veya içerik ara...',
+                            hintText: 'Görev adı veya TSK-41 ara...',
                             hintStyle: const TextStyle(fontSize: 13),
                             prefixIcon:
                                 const Icon(Icons.search_rounded, size: 18),
@@ -668,7 +684,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children:
-                              ['All', 'High', 'Medium', 'Low'].map((priority) {
+                              ['All', 'Critical', 'High', 'Medium', 'Low'].map((priority) {
                             final isSelected = _filterPriority == priority;
                             final Color activeColor = priority == 'All'
                                 ? const Color(0xFF4F46E5)
@@ -761,13 +777,22 @@ class _KanbanScreenState extends State<KanbanScreen> {
                     children: [
                       Expanded(
                         child: _buildKanbanColumn(
+                          "Backlog",
+                          backlogTasks,
+                          const Color(0xFF64748B),
+                          isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: _buildKanbanColumn(
                           "To Do",
                           todoTasks,
                           const Color(0xFFF59E0B),
                           isDark,
                         ),
                       ),
-                      const SizedBox(width: 18),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: _buildKanbanColumn(
                           "In Progress",
@@ -776,7 +801,16 @@ class _KanbanScreenState extends State<KanbanScreen> {
                           isDark,
                         ),
                       ),
-                      const SizedBox(width: 18),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: _buildKanbanColumn(
+                          "Review",
+                          reviewTasks,
+                          const Color(0xFF8B5CF6),
+                          isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: _buildKanbanColumn(
                           "Done",
@@ -812,10 +846,10 @@ class _KanbanScreenState extends State<KanbanScreen> {
         return Container(
           decoration: BoxDecoration(
             color: isHovered
-                ? accentColor.withOpacity(0.08)
+                ? accentColor.withValues(alpha: 0.08)
                 : (isDark
-                    ? const Color(0xFF1E293B).withOpacity(0.45)
-                    : const Color(0xFFE2E8F0).withOpacity(0.5)),
+                    ? const Color(0xFF1E293B).withValues(alpha: 0.45)
+                    : const Color(0xFFE2E8F0).withValues(alpha: 0.5)),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isHovered
@@ -833,9 +867,9 @@ class _KanbanScreenState extends State<KanbanScreen> {
                     const BorderRadius.vertical(top: Radius.circular(13)),
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: accentColor.withOpacity(isDark ? 0.15 : 0.08),
+                    color: accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
                     border: Border(
                       top: BorderSide(color: accentColor, width: 3.5),
                       bottom: BorderSide(
@@ -852,42 +886,42 @@ class _KanbanScreenState extends State<KanbanScreen> {
                       Row(
                         children: [
                           Container(
-                            width: 9,
-                            height: 9,
+                            width: 8,
+                            height: 8,
                             decoration: BoxDecoration(
                               color: accentColor,
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Text(
                             title.toUpperCase(),
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                              letterSpacing: 0.6,
+                              fontSize: 11.5,
+                              letterSpacing: 0.5,
                               color: isDark
                                   ? Colors.white
                                   : const Color(0xFF0F172A),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: isDark
                                   ? const Color(0xFF0F172A)
                                   : Colors.white,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                  color: accentColor.withOpacity(0.4)),
+                                  color: accentColor.withValues(alpha: 0.4)),
                             ),
                             child: Text(
                               '${tasks.length}',
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
-                                fontSize: 11.5,
+                                fontSize: 11,
                                 color: accentColor,
                               ),
                             ),
@@ -898,7 +932,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                         constraints: const BoxConstraints(),
                         padding: const EdgeInsets.all(4),
                         icon: Icon(Icons.add_rounded,
-                            size: 20, color: accentColor),
+                            size: 18, color: accentColor),
                         tooltip: '$title sütununa görev ekle',
                         onPressed: () =>
                             _showAddTaskDialog(initialStatus: title),
@@ -911,15 +945,15 @@ class _KanbanScreenState extends State<KanbanScreen> {
                 child: tasks.isEmpty
                     ? Center(
                         child: Text(
-                          "Görev bulunmuyor",
+                          "Görev yok",
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: isDark ? Colors.grey[600] : Colors.grey[500],
                           ),
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(10),
                         itemCount: tasks.length,
                         itemBuilder: (context, index) {
                           final task = tasks[index];
@@ -929,7 +963,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                               elevation: 10,
                               borderRadius: BorderRadius.circular(12),
                               child: SizedBox(
-                                width: 290,
+                                width: 270,
                                 child: _buildTaskCard(task, isDark),
                               ),
                             ),
@@ -965,7 +999,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
         boxShadow: [
           if (!isDark)
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
@@ -981,7 +1015,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                 left: BorderSide(color: priorityColor, width: 4.5),
               ),
             ),
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1009,7 +1043,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                   task.title,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 14.5,
+                    fontSize: 14,
                     decoration: task.status == 'Done'
                         ? TextDecoration.lineThrough
                         : null,
@@ -1019,19 +1053,19 @@ class _KanbanScreenState extends State<KanbanScreen> {
                   ),
                 ),
                 if (task.description.isNotEmpty) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   Text(
                     task.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
-                      fontSize: 12.5,
-                      height: 1.35,
+                      fontSize: 12,
+                      height: 1.3,
                     ),
                   ),
                 ],
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1042,15 +1076,15 @@ class _KanbanScreenState extends State<KanbanScreen> {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                              horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
-                            color: priorityColor.withOpacity(0.12),
+                            color: priorityColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             task.priority,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 10.5,
                               fontWeight: FontWeight.w800,
                               color: priorityColor,
                             ),
@@ -1059,11 +1093,11 @@ class _KanbanScreenState extends State<KanbanScreen> {
                         if (hasDueDate)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 3),
+                                horizontal: 6, vertical: 3),
                             decoration: BoxDecoration(
                               color: overdue
-                                  ? Colors.red.withOpacity(0.15)
-                                  : (isDark
+                                  ? Colors.red.withValues(alpha: 0.15)
+                              : (isDark
                                       ? const Color(0xFF0F172A)
                                       : const Color(0xFFF1F5F9)),
                               borderRadius: BorderRadius.circular(6),
@@ -1084,7 +1118,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                                 Text(
                                   task.dueDate!,
                                   style: TextStyle(
-                                    fontSize: 10.5,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                     color: overdue
                                         ? Colors.redAccent
@@ -1099,11 +1133,11 @@ class _KanbanScreenState extends State<KanbanScreen> {
                       ],
                     ),
                     CircleAvatar(
-                      radius: 11,
-                      backgroundColor: const Color(0xFF4F46E5).withOpacity(0.15),
+                      radius: 10,
+                      backgroundColor: const Color(0xFF4F46E5).withValues(alpha: 0.15),
                       child: const Icon(
                         Icons.person_rounded,
-                        size: 13,
+                        size: 12,
                         color: Color(0xFF4F46E5),
                       ),
                     ),

@@ -1,0 +1,11 @@
+.dart_tool/
+build/
+android/
+ios/
+linux/
+macos/
+windows/
+.idea/
+*.iml
+.pub-cache/
+.pub/

@@ -27,10 +27,11 @@ Bu proje, **FastAPI** (Backend) ve **Flutter** (Frontend) kullanılarak gelişti
 ## 🛠️ Kullanılan Teknolojiler
 
 ### Backend (`backend/`)
-* **Dil & Framework:** Python, FastAPI
-* **Veritabanı & ORM:** SQLite, SQLAlchemy
-* **Veri Doğrulama:** Pydantic (`BaseModel`, `EmailStr`)
-* **Güvenlik:** Passlib (`bcrypt`), PyJWT / `python-jose`
+* **Dil & Framework:** Python 3.11, FastAPI
+* **Veritabanı & ORM:** PostgreSQL 15, SQLAlchemy (psycopg3 sürücüsü)
+* **Veri Doğrulama:** Pydantic v2 (`BaseModel`, `EmailStr`)
+* **Güvenlik:** Passlib (`bcrypt`), `python-jose` (JWT)
+* **Yapılandırma:** `python-dotenv` (`.env` dosyası)
 
 ### Frontend (`mini_jira_app/`)
 * **Framework:** Flutter (Material 3 — Aydınlık ve Karanlık Tema Desteği)
@@ -46,11 +47,13 @@ mini-jira/
 ├── backend/
 │   ├── app/
 │   │   ├── api/endpoints/   # auth.py, project.py, task.py
-│   │   ├── core/            # security.py, config.py
+│   │   ├── core/            # security.py
 │   │   ├── db/              # database.py
-│   │   ├── models/          # user.py, project.py, task.py
+│   │   ├── models/          # user.py, project.py, task.py, workspace.py, extra_features.py
 │   │   ├── schemas/         # user.py, project.py, task.py
 │   │   └── main.py          # FastAPI uygulaması ve CORS ayarları
+│   ├── tests/               # pytest testleri
+│   ├── .env.example
 │   └── requirements.txt
 ├── mini_jira_app/
 │   └── lib/
@@ -67,17 +70,43 @@ mini-jira/
 
 ## ⚙️ Kurulum ve Çalıştırma Adımları
 
-### 1. Backend Sunucusunu Başlatma
+### Yöntem A — Docker Compose (önerilen)
+PostgreSQL, backend ve Flutter web arayüzünü tek komutla ayağa kaldırır.
+
+```bash
+docker compose up -d --build
+```
+
+* **Arayüz (Flutter Web):** http://localhost
+* **Backend API:** http://localhost:8000
+* **Swagger Dokümantasyonu:** http://localhost:8000/docs
+
+Durdurmak için `docker compose down` (veritabanı verilerini de silmek için `docker compose down -v`).
+
+### Yöntem B — Manuel (yerel geliştirme)
+
+#### 1. PostgreSQL'i başlat
+Yalnızca veritabanı servisini Docker ile çalıştırmak en kolay yoldur:
+
+```bash
+docker compose up -d db
+```
+
+Bu komut `jira_user / jira_password` bilgileriyle `minijira` veritabanını `localhost:5432` üzerinde ayağa kaldırır.
+
+#### 2. Backend sunucusunu başlat
 ```bash
 cd backend
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+copy .env.example .env
 uvicorn app.main:app --reload
 ```
+`.env` dosyasındaki `DATABASE_URL`, `SECRET_KEY` ve `ACCESS_TOKEN_EXPIRE_MINUTES` değerlerini ortamınıza göre düzenleyebilirsiniz. Tablolar uygulama ilk açılışta otomatik oluşturulur; mevcut tablolara sonradan eklenen yeni sütunlar da (`ensure_schema`) veri kaybı olmadan otomatik tamamlanır.
 *Swagger API Dokümantasyonu:* `http://127.0.0.1:8000/docs`
 
-### 2. Flutter Uygulamasını Başlatma
+#### 3. Flutter uygulamasını başlat
 ```bash
 cd mini_jira_app
 flutter pub get

@@ -1,20 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
-from pydantic import BaseModel
+from typing import List
 
 from app.db.database import get_db
 from app.models.project import Project
 from app.models.task import Task
-from app.schemas.project import ProjectCreate, ProjectResponse
+from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse
 from app.api.endpoints.auth import get_current_user
 
 router = APIRouter()
-
-# Proje güncelleme şeması
-class ProjectUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
 
 @router.get("/", response_model=List[ProjectResponse])
 def get_projects(
@@ -23,7 +17,21 @@ def get_projects(
 ):
     return db.query(Project).filter(Project.owner_id == current_user.id).all()
 
-@router.post("/", response_model=ProjectResponse, status_code=201)
+# Tekil Proje Getirme (GET /api/projects/{project_id})
+@router.get("/{project_id}", response_model=ProjectResponse)
+def get_project_by_id(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Proje bulunamadı")
+    if project.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Bu projeyi görüntüleme yetkiniz yok")
+    return project
+
+@router.post("/", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 def create_project(
     project: ProjectCreate,
     db: Session = Depends(get_db),
@@ -39,7 +47,6 @@ def create_project(
     db.refresh(new_project)
     return new_project
 
-# Projeyi Düzenleme (PUT)
 @router.put("/{project_id}", response_model=ProjectResponse)
 def update_project(
     project_id: int,
@@ -49,9 +56,9 @@ def update_project(
 ):
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
-        raise HTTPException(status_code=404, detail="Proje bulunamadı")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Proje bulunamadı")
     if project.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Bu projeyi düzenleme yetkiniz yok")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Bu projeyi düzenleme yetkiniz yok")
 
     if project_data.name is not None:
         project.name = project_data.name
@@ -62,7 +69,6 @@ def update_project(
     db.refresh(project)
     return project
 
-# Projeyi Silme (DELETE) - Projeye bağlı görevleri de temizler
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_project(
     project_id: int,
@@ -71,11 +77,10 @@ def delete_project(
 ):
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
-        raise HTTPException(status_code=404, detail="Proje bulunamadı")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Proje bulunamadı")
     if project.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Bu projeyi silme yetkiniz yok")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Bu projeyi silme yetkiniz yok")
 
-    # Önce projeye ait görevleri, ardından projeyi siliyoruz
     db.query(Task).filter(Task.project_id == project_id).delete()
     db.delete(project)
     db.commit()

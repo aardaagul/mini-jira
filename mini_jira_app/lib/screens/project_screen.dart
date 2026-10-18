@@ -18,8 +18,12 @@ class ProjectDashboardData {
 }
 
 class ProjectScreen extends StatefulWidget {
+  // use_key_in_widget_constructors çözümü
+  const ProjectScreen({super.key}); 
+
   @override
-  _ProjectScreenState createState() => _ProjectScreenState();
+  // library_private_types_in_public_api çözümü
+  State<ProjectScreen> createState() => _ProjectScreenState(); 
 }
 
 class _ProjectScreenState extends State<ProjectScreen> {
@@ -102,15 +106,18 @@ class _ProjectScreenState extends State<ProjectScreen> {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
         (route) => false,
       );
     }
   }
 
   void _showAddProjectDialog() {
-    final _nameController = TextEditingController();
-    final _descController = TextEditingController();
+    final nameController = TextEditingController();
+    final descController = TextEditingController();
+
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
 
     showDialog(
       context: context,
@@ -125,7 +132,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
-                    controller: _nameController,
+                    controller: nameController,
                     decoration: const InputDecoration(
                       labelText: 'Proje Adı',
                       hintText: 'Örn: RISC-V İşlemci Tasarımı',
@@ -133,7 +140,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextField(
-                    controller: _descController,
+                    controller: descController,
                     decoration: const InputDecoration(
                       labelText: 'Proje Açıklaması',
                       hintText: 'Mimari hedefler ve modül kapsamı',
@@ -151,16 +158,18 @@ class _ProjectScreenState extends State<ProjectScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (_nameController.text.trim().isNotEmpty) {
+                if (nameController.text.trim().isNotEmpty) {
                   bool success = await _projectService.createProject(
-                    name: _nameController.text.trim(),
-                    description: _descController.text.trim(),
+                    name: nameController.text.trim(),
+                    description: descController.text.trim(),
                   );
-                  Navigator.pop(context);
+                  // !mounted kontrolü eklendi
+                  if (!mounted) return;
+                  navigator.pop();
 
                   if (success) {
                     _loadProjects();
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(
                         content: Text("Proje başarıyla oluşturuldu!"),
                         behavior: SnackBarBehavior.floating,
@@ -178,8 +187,11 @@ class _ProjectScreenState extends State<ProjectScreen> {
   }
 
   void _showEditProjectDialog(Project project) {
-    final _nameController = TextEditingController(text: project.title);
-    final _descController = TextEditingController(text: project.description);
+    final nameController = TextEditingController(text: project.title);
+    final descController = TextEditingController(text: project.description);
+
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
 
     showDialog(
       context: context,
@@ -194,12 +206,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
-                    controller: _nameController,
+                    controller: nameController,
                     decoration: const InputDecoration(labelText: 'Proje Adı'),
                   ),
                   const SizedBox(height: 16),
                   TextField(
-                    controller: _descController,
+                    controller: descController,
                     decoration: const InputDecoration(labelText: 'Açıklama'),
                     maxLines: 3,
                   ),
@@ -214,17 +226,19 @@ class _ProjectScreenState extends State<ProjectScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (_nameController.text.trim().isNotEmpty) {
+                if (nameController.text.trim().isNotEmpty) {
                   bool success = await _projectService.updateProject(
                     project.id,
-                    _nameController.text.trim(),
-                    _descController.text.trim(),
+                    nameController.text.trim(),
+                    descController.text.trim(),
                   );
-                  Navigator.pop(context);
+                  // !mounted kontrolü eklendi
+                  if (!mounted) return;
+                  navigator.pop();
 
                   if (success) {
                     _loadProjects();
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(
                         content: Text("Proje güncellendi!"),
                         behavior: SnackBarBehavior.floating,
@@ -267,6 +281,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
 
     if (confirm) {
       bool deleted = await _projectService.deleteProject(project.id);
+      if (!mounted) return;
       if (deleted) {
         _loadProjects();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -289,7 +304,6 @@ class _ProjectScreenState extends State<ProjectScreen> {
     return Scaffold(
       body: Row(
         children: [
-          // AÇILIR-KAPANIR SOL KURUMSAL MENÜ (SIDEBAR)
           AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeInOut,
@@ -439,7 +453,6 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   ),
                   const Spacer(),
                   const Divider(height: 1),
-                  // KULLANICI PROFİL BİLGİSİ
                   Padding(
                     padding: EdgeInsets.fromLTRB(
                       _isSidebarCollapsed ? 8 : 14,
@@ -515,7 +528,6 @@ class _ProjectScreenState extends State<ProjectScreen> {
                       ),
                     ),
                   ),
-                  // Alt Kontroller: Tema ve Çıkış
                   Padding(
                     padding: const EdgeInsets.all(10.0),
                     child: Column(
@@ -543,8 +555,6 @@ class _ProjectScreenState extends State<ProjectScreen> {
               ),
             ),
           ),
-
-          // SAĞ ANA İÇERİK ALANI
           Expanded(
             child: Column(
               children: [
@@ -682,7 +692,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             ),
             decoration: BoxDecoration(
               color: isSelected
-                  ? activeColor.withOpacity(0.12)
+                  ? activeColor.withValues(alpha: 0.12)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
             ),
@@ -788,12 +798,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
 
     final filteredProjects = projects.where((p) {
       if (_projectSearchQuery.isEmpty) return true;
-      return p.title
-              .toLowerCase()
-              .contains(_projectSearchQuery.toLowerCase()) ||
-          p.description
-              .toLowerCase()
-              .contains(_projectSearchQuery.toLowerCase());
+      final query = _projectSearchQuery.toLowerCase().trim();
+      final projectKey = 'prj-${p.id}';
+
+      return projectKey.contains(query) ||
+          p.id.toString() == query ||
+          p.title.toLowerCase().contains(query) ||
+          p.description.toLowerCase().contains(query);
     }).toList();
 
     return Column(
@@ -865,7 +876,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 child: TextField(
                   controller: _searchController,
                   decoration: const InputDecoration(
-                    hintText: 'Proje ara...',
+                    hintText: 'Proje adı veya PRJ-1 ara...',
                     hintStyle: TextStyle(fontSize: 13),
                     prefixIcon: Icon(Icons.search_rounded, size: 18),
                     contentPadding:
@@ -919,11 +930,11 @@ class _ProjectScreenState extends State<ProjectScreen> {
                                     horizontal: 10, vertical: 6),
                                 decoration: BoxDecoration(
                                   color:
-                                      const Color(0xFF4F46E5).withOpacity(0.1),
+                                      const Color(0xFF4F46E5).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                     color: const Color(0xFF4F46E5)
-                                        .withOpacity(0.3),
+                                        .withValues(alpha: 0.3),
                                   ),
                                 ),
                                 child: Text(
@@ -1238,7 +1249,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             leading: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF4F46E5).withOpacity(0.1),
+                color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -1257,7 +1268,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.12),
+                color: Colors.orange.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -1308,7 +1319,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 24),
@@ -1358,7 +1369,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(isDark ? 0.16 : 0.1),
+        color: color.withValues(alpha: isDark ? 0.16 : 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

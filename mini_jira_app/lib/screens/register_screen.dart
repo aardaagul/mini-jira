@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
@@ -53,10 +55,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    if (password.length < 4) {
+    if (password.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Şifre en az 4 karakter olmalıdır."),
+          content: Text("Şifre en az 6 karakter olmalıdır."),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -65,6 +67,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
     String? errorMessage = await _authService.register(name, email, password);
+    
+    // Async işlem sonrası widget hala ekranda mı kontrolü (use_build_context_synchronously çözümü)
+    if (!mounted) return;
+
     setState(() => _isLoading = false);
 
     if (errorMessage == null) {

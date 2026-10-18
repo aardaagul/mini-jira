@@ -1,14 +1,26 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.db.database import engine, Base
-from app.models import user
-# auth.py router'ını import ediyoruz (YENİ EKLENDİ)
-from app.api.endpoints import auth 
-from app.models.project import Project
-from app.models.task import Task
+from app.db.database import engine, Base, ensure_schema
+# Tüm modelleri (User, Project, Task, Workspace, Sprint vb.) Base.metadata'ya kaydet
+from app.models import (  # noqa: F401
+    User,
+    Project,
+    Task,
+    Workspace,
+    WorkspaceMember,
+    WorkspaceRole,
+    Sprint,
+    Comment,
+    Label,
+    TaskLabel,
+    ActivityLog,
+)
+from app.api.endpoints import auth
 from app.api.endpoints import task
 
 Base.metadata.create_all(bind=engine)
+# Var olan tablolardaki eksik sütunları (örn. projects.key) tamamla
+ensure_schema()
 
 app = FastAPI()
 
