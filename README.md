@@ -1,5 +1,14 @@
 # 📋 Mini-Jira — Proje ve Görev Yönetim Uygulaması
 
+[![CI](https://github.com/aardaagul/mini-jira/actions/workflows/ci.yml/badge.svg)](https://github.com/aardaagul/mini-jira/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)
+![Flutter](https://img.shields.io/badge/Flutter-stable-02569B?logo=flutter&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+[![Release](https://img.shields.io/github/v/release/aardaagul/mini-jira?sort=semver)](https://github.com/aardaagul/mini-jira/releases)
+
 Bu proje, **FastAPI** (Backend) ve **Flutter** (Frontend) kullanılarak geliştirilmiş, JWT tabanlı kullanıcı kimlik doğrulaması ve sürükle-bırak (Drag & Drop) Kanban panosu içeren uçtan uca (Full-Stack) bir proje ve görev yönetim uygulamasıdır.
 
 ---
@@ -117,3 +126,14 @@ flutter run -d chrome
 
 ## 👤 Geliştirici
 **Muhammed Arda Gül** — [@aardaagul](https://github.com/aardaagul)
+
+---
+
+## 🤝 Katkıda Bulunma
+Katkılar memnuniyetle karşılanır! Lütfen [CONTRIBUTING.md](CONTRIBUTING.md) dosyasını ve [Davranış Kuralları](CODE_OF_CONDUCT.md)'nı inceleyin.
+
+## 🔐 Güvenlik
+Güvenlik açığı bildirimi için [SECURITY.md](SECURITY.md) dosyasına bakın.
+
+## 📄 Lisans
+Bu proje **MIT Lisansı** ile lisanslanmıştır. Ayrıntılar için [LICENSE](LICENSE) dosyasına göz atın.

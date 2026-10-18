@@ -1,0 +1,50 @@
+version: 2
+updates:
+  # Backend bağımlılıkları (Python / pip)
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - backend
+
+  # Flutter bağımlılıkları (Dart / pub)
+  - package-ecosystem: pub
+    directory: /mini_jira_app
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - frontend
+
+  # GitHub Actions sürümleri
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - ci
+
+  # Docker imajları
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - docker
+
+  - package-ecosystem: docker
+    directory: /mini_jira_app
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - docker

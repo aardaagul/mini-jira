@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend • pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Üretimde PostgreSQL kullanılır. Testler kendi in-memory SQLite
+      # veritabanlarını kurduğu için, import sırasında çalışan tablo
+      # kurulumunun dış bir veritabanına ihtiyaç duymaması adına
+      # DATABASE_URL burada SQLite'a yönlendirilir.
+      DATABASE_URL: sqlite:///./ci_import.db
+      SECRET_KEY: ci-secret-key
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Bağımlılıkları yükle
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Testleri çalıştır
+        run: pytest -q
+
+  frontend:
+    name: Frontend • analyze & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mini_jira_app
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Flutter kur
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıkları yükle
+        run: flutter pub get
+
+      - name: Statik analiz
+        run: flutter analyze
+
+      - name: Testleri çalıştır
+        run: flutter test

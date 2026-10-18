@@ -1,0 +1,46 @@
+# Dosya satır sonlarını ve türlerini otomatik yönet
+* text=auto
+
+# Metin dosyaları
+*.py     text
+*.dart   text
+*.md     text
+*.txt    text
+*.yml    text
+*.yaml   text
+*.json   text
+*.toml   text
+*.ini    text
+*.cfg    text
+*.html   text
+*.css    text
+*.js     text
+
+# Windows betikleri (CRLF)
+*.bat    text eol=crlf
+*.cmd    text eol=crlf
+*.ps1    text eol=crlf
+
+# Docker / kabuk
+Dockerfile      text
+*.sh            text eol=lf
+docker-compose* text
+
+# İkili dosyalar (dönüştürme yapma)
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.svg    text
+*.ttf    binary
+*.otf    binary
+*.woff   binary
+*.woff2  binary
+*.pdf    binary
+*.db     binary
+*.sqlite3 binary
+
+# Dil istatistiklerinde gürültüyü azalt
+*.lock          linguist-generated=true
+mini_jira_app/pubspec.lock linguist-generated=true

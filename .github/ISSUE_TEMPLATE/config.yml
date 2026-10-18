@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Dokümantasyon / README
+    url: https://github.com/aardaagul/mini-jira#readme
+    about: Kurulum ve kullanım hakkında bilgi almak için README'ye göz atın.
+  - name: 💬 Sorular ve Tartışmalar
+    url: https://github.com/aardaagul/mini-jira/issues
+    about: Sorularınız için issue açabilirsiniz.

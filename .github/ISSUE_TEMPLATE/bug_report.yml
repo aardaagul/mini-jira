@@ -1,0 +1,80 @@
+name: 🐞 Hata Raporu
+description: Bir hata veya beklenmeyen davranış bildirin
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Hata bildirdiğiniz için teşekkürler! Lütfen aşağıdaki alanları olabildiğince detaylı doldurun.
+
+  - type: textarea
+    id: aciklama
+    attributes:
+      label: Hatanın Açıklaması
+      description: Ne oldu? Ne olmasını bekliyordunuz?
+      placeholder: Kısa ve net bir açıklama yazın.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tekrarla
+    attributes:
+      label: Yeniden Üretme Adımları
+      description: Hatayı tekrar oluşturmak için izlenen adımlar
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ortam
+    attributes:
+      label: Çalıştırma Ortamı
+      options:
+        - Docker Compose
+        - Yerel (manuel kurulum)
+        - Diğer
+    validations:
+      required: true
+
+  - type: dropdown
+    id: bilesen
+    attributes:
+      label: İlgili Bileşen
+      options:
+        - Backend (FastAPI)
+        - Frontend (Flutter)
+        - Veritabanı (PostgreSQL)
+        - Docker / Altyapı
+        - Bilmiyorum
+    validations:
+      required: true
+
+  - type: input
+    id: surum
+    attributes:
+      label: Sürüm / Commit
+      description: Örn. v1.1.0 veya commit hash
+      placeholder: v1.1.0
+    validations:
+      required: false
+
+  - type: textarea
+    id: loglar
+    attributes:
+      label: Hata Kayıtları / Ekran Görüntüleri
+      description: Konsol çıktısı, stack trace veya ekran görüntüsü
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: kontrol
+    attributes:
+      label: Kontrol Listesi
+      options:
+        - label: Mevcut issue'ları aradım ve bu sorun daha önce bildirilmemiş.
+          required: true

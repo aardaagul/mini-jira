@@ -1,0 +1,55 @@
+name: ✨ Özellik İsteği
+description: Yeni bir özellik veya iyileştirme önerin
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Öneriniz için teşekkürler! Lütfen aşağıdaki alanları doldurun.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / İhtiyaç
+      description: Bu özellik hangi ihtiyacı veya sorunu çözüyor?
+      placeholder: "... yapamıyorum, bu yüzden ... gerekiyor."
+    validations:
+      required: true
+
+  - type: textarea
+    id: cozum
+    attributes:
+      label: Önerilen Çözüm
+      description: Nasıl bir çözüm hayal ediyorsunuz?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatif
+    attributes:
+      label: Değerlendirilen Alternatifler
+      description: Düşündüğünüz başka çözümler var mı?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: bilesen
+    attributes:
+      label: İlgili Bileşen
+      options:
+        - Backend (FastAPI)
+        - Frontend (Flutter)
+        - Veritabanı (PostgreSQL)
+        - Docker / Altyapı
+        - Diğer
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: kontrol
+    attributes:
+      label: Kontrol Listesi
+      options:
+        - label: Mevcut issue'ları aradım ve bu öneri daha önce paylaşılmamış.
+          required: true
